@@ -1,11 +1,15 @@
 FROM node AS build-env
 
+RUN useradd -m docker
+USER docker
+WORKDIR /home/docker
 COPY . .
-RUN npm install --production --no-bin-links
+RUN npm install
 
 FROM node:alpine
 
-COPY --from=build-env node_modules node_modules
-COPY --from=build-env index.js index.js
+WORKDIR /app
+
+COPY --from=build-env /home/docker /app
 
 ENTRYPOINT node index.js
