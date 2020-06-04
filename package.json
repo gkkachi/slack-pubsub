@@ -1,6 +1,6 @@
 {
   "dependencies": {
     "@google-cloud/pubsub": "*",
-    "@slack/events-api": "*"
+    "events-api": "git+https://github.com/gkkachi/node-slack-sdk.git"
   }
 }
