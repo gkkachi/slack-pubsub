@@ -10,6 +10,7 @@ FROM node:alpine
 
 WORKDIR /app
 
-COPY --from=build-env /home/docker /app
+COPY --from=build-env /home/docker/node_modules /app/node_modules
+COPY --from=build-env /home/docker/index.js     /app/index.js
 
 ENTRYPOINT node index.js
