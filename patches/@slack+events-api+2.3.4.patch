@@ -1,0 +1,13 @@
+diff --git a/node_modules/@slack/events-api/dist/http-handler.js b/node_modules/@slack/events-api/dist/http-handler.js
+index 8ebf0ef..b735d5b 100644
+--- a/node_modules/@slack/events-api/dist/http-handler.js
++++ b/node_modules/@slack/events-api/dist/http-handler.js
+@@ -199,7 +199,7 @@ function createHTTPHandler(adapter) {
+                     respond();
+                 }
+                 debug('emitting event -  type: %s, arguments: %o', body.event.type, emitArguments);
+-                adapter.emit.apply(adapter, __spreadArrays([body.event.type], emitArguments));
++                adapter.emit.apply(adapter, __spreadArrays(['data'], emitArguments));
+             }
+         }).catch(function (error) {
+             handleError(error, respond);

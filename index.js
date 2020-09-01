@@ -8,7 +8,7 @@ const port = env.PORT || 3000;
 const { PubSub } = require('@google-cloud/pubsub');
 const pubSubClient = new PubSub();
 
-const { createEventAdapter } = require('events-api');
+const { createEventAdapter } = require('@slack/events-api');
 const slackEvents = createEventAdapter(slackSigningSecret, {
   waitForResponse: true,
 });

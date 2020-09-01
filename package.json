@@ -1,9 +1,10 @@
 {
   "scripts": {
-    "preinstall": "git clone https://github.com/gkkachi/node-slack-sdk && mv node-slack-sdk/packages/events-api . && cd events-api && npm install"
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@google-cloud/pubsub": "*",
-    "events-api": "./events-api"
+    "@slack/events-api": "*",
+    "patch-package": "*"
   }
 }
