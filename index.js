@@ -13,21 +13,33 @@ const slackEvents = createEventAdapter(slackSigningSecret, {
   waitForResponse: true,
 });
 
-// Attach listeners to events by Slack Event "type". See: https://api.slack.com/events/message.im
-slackEvents.on('data', async (event, respond) => {
-  const data = JSON.stringify(event);
+const { createMessageAdapter } = require('@slack/interactive-messages');
+const slackInteractions = createMessageAdapter(slackSigningSecret, {
+  waitForResponse: true,
+});
+
+const app = require('express')();
+app.use('/events', slackEvents.requestListener());
+app.use('/interactions', slackInteractions.requestListener());
+
+const publish = async (dataObj, respond) => {
+  const data = JSON.stringify(dataObj);
+  console.log(data);
   const dataBuffer = Buffer.from(data);
   const messageId = await pubSubClient.topic(topicName).publish(dataBuffer);
   console.log(`Message ${messageId} published.`);
   respond();
-});
+};
+
+// Attach listeners to events by Slack Event "type". See: https://api.slack.com/events/message.im
+slackEvents.on('data', publish);
+
+// Attach listeners to interactive massages.
+slackInteractions.all(publish);
 
 // All errors in listeners are caught here. If this weren't caught, the program would terminate.
 slackEvents.on('error', (error) => {
   console.log(error.name);
 });
 
-(async () => {
-  const server = await slackEvents.start(port);
-  console.log(`Listening for events on ${server.address().port}`);
-})();
+app.listen(port);

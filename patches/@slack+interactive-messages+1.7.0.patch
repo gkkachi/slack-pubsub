@@ -1,0 +1,150 @@
+diff --git a/node_modules/@slack/interactive-messages/dist/adapter.js b/node_modules/@slack/interactive-messages/dist/adapter.js
+index be6b81e..3f173bc 100644
+--- a/node_modules/@slack/interactive-messages/dist/adapter.js
++++ b/node_modules/@slack/interactive-messages/dist/adapter.js
+@@ -243,6 +243,9 @@ var SlackMessageAdapter = /** @class */ (function () {
+     SlackMessageAdapter.prototype.requestListener = function () {
+         return http_handler_1.createHTTPHandler(this);
+     };
++    SlackMessageAdapter.prototype.all = function (callback) {
++        return this.registerCallback('*', callback);
++    };
+     /* Interface for adding handlers */
+     /* tslint:disable max-line-length */
+     /**
+@@ -455,135 +458,6 @@ var SlackMessageAdapter = /** @class */ (function () {
+     };
+     SlackMessageAdapter.prototype.matchCallback = function (payload) {
+         return this.callbacks.find(function (_a) {
+-            var constraints = _a[0];
+-            // if the callback ID constraint is specified, only continue if it matches
+-            if (!util_1.isFalsy(constraints.callbackId)) {
+-                // The callback ID is located at a different path in the payload for view submission and view closed
+-                // than for actions
+-                var callbackId = ((constraints.handlerType === "view_submission" /* ViewSubmission */ ||
+-                    constraints.handlerType === "view_closed" /* ViewClosed */) && payload.view) ? payload.view.callback_id : payload.callback_id;
+-                if (lodash_isstring_1.default(constraints.callbackId) && callbackId !== constraints.callbackId) {
+-                    return false;
+-                }
+-                if (lodash_isregexp_1.default(constraints.callbackId) && !constraints.callbackId.test(callbackId)) {
+-                    return false;
+-                }
+-            }
+-            // if the action constraint is specified, only continue if it matches
+-            if (constraints.handlerType === "action" /* Action */) {
+-                // a payload that represents an action either has actions, submission, or message defined
+-                if (!(payload.actions || payload.submission || payload.message)) {
+-                    return false;
+-                }
+-                // dialog submissions don't have an action defined, so an empty action is substituted for
+-                // the purpose of callback matching
+-                var action = payload.actions ? payload.actions[0] : {};
+-                // if the block ID constraint is specified, only continue if it matches
+-                if (!util_1.isFalsy(constraints.blockId)) {
+-                    if (lodash_isstring_1.default(constraints.blockId) && action.block_id !== constraints.blockId) {
+-                        return false;
+-                    }
+-                    if (lodash_isregexp_1.default(constraints.blockId) && !constraints.blockId.test(action.block_id)) {
+-                        return false;
+-                    }
+-                }
+-                // if the action ID constraint is specified, only continue if it matches
+-                if (!util_1.isFalsy(constraints.actionId)) {
+-                    if (lodash_isstring_1.default(constraints.actionId) && action.action_id !== constraints.actionId) {
+-                        return false;
+-                    }
+-                    if (lodash_isregexp_1.default(constraints.actionId) && !constraints.actionId.test(action.action_id)) {
+-                        return false;
+-                    }
+-                }
+-                // button and message actions have a type defined inside the action, dialog submission
+-                // actions have a type defined at the top level, and select actions don't have a type
+-                // defined, but type can be inferred by checking if a `selected_options` property exists in
+-                // the action.
+-                // tslint:disable-next-line strict-boolean-expressions
+-                var type = action.type || payload.type || (action.selected_options && 'select');
+-                if (!type) {
+-                    debug('no type found in dispatched action');
+-                }
+-                // if the type constraint is specified, only continue if it matches
+-                if (!util_1.isFalsy(constraints.type) && constraints.type !== type) {
+-                    return false;
+-                }
+-                // if the unfurl constraint is specified, only continue if it matches
+-                if ('unfurl' in constraints &&
+-                    ((constraints.unfurl && !payload.is_app_unfurl) ||
+-                        (!constraints.unfurl && payload.is_app_unfurl))) {
+-                    return false;
+-                }
+-            }
+-            if (constraints.handlerType === "options" /* Options */) {
+-                // a payload that represents an options request in attachments always has a name defined
+-                // at the top level. in blocks the type is block_suggestion and has no name
+-                if (!('name' in payload || (payload.type && payload.type === 'block_suggestion'))) {
+-                    return false;
+-                }
+-                // if the block ID constraint is specified, only continue if it matches
+-                if (!util_1.isFalsy(constraints.blockId)) {
+-                    if (lodash_isstring_1.default(constraints.blockId) && payload.block_id !== constraints.blockId) {
+-                        return false;
+-                    }
+-                    if (lodash_isregexp_1.default(constraints.blockId) && !constraints.blockId.test(payload.block_id)) {
+-                        return false;
+-                    }
+-                }
+-                // if the action ID constraint is specified, only continue if it matches
+-                if (!util_1.isFalsy(constraints.actionId)) {
+-                    if (lodash_isstring_1.default(constraints.actionId) && payload.action_id !== constraints.actionId) {
+-                        return false;
+-                    }
+-                    if (lodash_isregexp_1.default(constraints.actionId) && !constraints.actionId.test(payload.action_id)) {
+-                        return false;
+-                    }
+-                }
+-                // an options request always has a type at the top level which can be one of three values
+-                // that need to be mapped into the values for the `within` constraint:
+-                // * type:interactive_message => within:interactive_message
+-                // * type:block_suggestion => within:block_actions
+-                // * type:dialog_suggestion => within:dialog
+-                if (!util_1.isFalsy(constraints.within)) {
+-                    if (constraints.within === 'interactive_message' && payload.type !== 'interactive_message') {
+-                        return false;
+-                    }
+-                    if (constraints.within === 'block_actions' && payload.type !== 'block_suggestion') {
+-                        return false;
+-                    }
+-                    if (constraints.within === 'dialog' && payload.type !== 'dialog_suggestion') {
+-                        return false;
+-                    }
+-                }
+-            }
+-            if (constraints.handlerType === "view_submission" /* ViewSubmission */ ||
+-                constraints.handlerType === "view_closed" /* ViewClosed */) {
+-                // a payload that represents a view submission always has a type property set to view_submission,
+-                // a payload that represents a view closed interaction always has a type property set to view_closed
+-                if (!util_1.isFalsy(payload.type) &&
+-                    (constraints.handlerType === "view_submission" /* ViewSubmission */ && payload.type !== 'view_submission') ||
+-                    (constraints.handlerType === "view_closed" /* ViewClosed */ && payload.type !== 'view_closed')) {
+-                    return false;
+-                }
+-                // if there's no view in this payload, this payload is malformed - abort matching.
+-                if (util_1.isFalsy(payload.view)) {
+-                    return false;
+-                }
+-                // if the view ID constraint is specified, only continue if it matches
+-                if (!util_1.isFalsy(constraints.viewId) && payload.view.id !== constraints.viewId) {
+-                    return false;
+-                }
+-                // if the external ID constraint is specified, only continue if it matches
+-                if (!util_1.isFalsy(constraints.externalId)) {
+-                    if (lodash_isstring_1.default(constraints.externalId) && payload.view.external_id !== constraints.externalId) {
+-                        return false;
+-                    }
+-                    if (lodash_isregexp_1.default(constraints.externalId) && !constraints.externalId.test(payload.view.external_id)) {
+-                        return false;
+-                    }
+-                }
+-            }
+             // if there's no reason to eliminate this callback, then its a match!
+             return true;
+         });
