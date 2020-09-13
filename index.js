@@ -22,17 +22,19 @@ const app = require('express')();
 app.use('/events', slackEvents.requestListener());
 app.use('/interactions', slackInteractions.requestListener());
 
-const publish = async (dataObj, respond) => {
+const publish = async (dataObj) => {
   const data = JSON.stringify(dataObj);
   console.log(data);
   const dataBuffer = Buffer.from(data);
   const messageId = await pubSubClient.topic(topicName).publish(dataBuffer);
   console.log(`Message ${messageId} published.`);
-  respond();
 };
 
 // Attach listeners to events by Slack Event "type". See: https://api.slack.com/events/message.im
-slackEvents.on('data', publish);
+slackEvents.on('data', async (payload, respond) => {
+  await publish(payload);
+  respond();
+});
 
 // Attach listeners to interactive massages.
 slackInteractions.all(publish);
